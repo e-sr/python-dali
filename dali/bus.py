@@ -9,7 +9,7 @@ from dali.exceptions import NoFreeAddress
 from dali.exceptions import NotConnected
 from dali.exceptions import ProgramShortAddressFailure
 import dali.gear.general as gear
-import sets
+#import sets
 import time
 
 
@@ -33,7 +33,7 @@ class Device(object):
 class Bus(object):
     """A DALI bus."""
 
-    _all_addresses = sets.ImmutableSet(range(64))
+    _all_addresses = set(range(64))
 
     def __init__(self, name=None, interface=None):
         self._devices = {}
@@ -59,7 +59,7 @@ class Bus(object):
 
     def unused_addresses(self):
         """Return all short addresses that are not in use."""
-        used_addresses = sets.ImmutableSet(self._devices.keys())
+        used_addresses = set(self._devices.keys())
         return list(self._all_addresses - used_addresses)
 
     def scan(self):
@@ -67,7 +67,7 @@ class Bus(object):
         each discovered device.
         """
         i = self.get_interface()
-        for sa in xrange(0, 64):
+        for sa in range(0, 64):
             if sa in self._devices:
                 continue
             response = i.send(
@@ -97,7 +97,7 @@ class Bus(object):
         self.set_search_addr(high)
         if low == high:
             response = i.send(gear.Compare())
-            if response.value is True:
+            if response.value is True :
                 return low
             return None
         response = i.send(gear.Compare())
@@ -106,17 +106,24 @@ class Bus(object):
             return self.find_next(low, midpoint) \
                 or self.find_next(midpoint + 1, high)
 
-    def assign_short_addresses(self):
+    def assign_short_addresses(self, reset=False):
         """Search for devices on the bus with no short address allocated, and
         allocate each one a short address from the set of unused
         addresses.
         """
-        if not self._bus_scanned:
-            self.scan()
-        addrs = self.unused_addresses()
+        if reset:
+            addrs=list(self._all_addresses)
+            broadcast=True
+            self._devices={}
+        else:
+            if not self._bus_scanned:
+                self.scan()
+            addrs = self.unused_addresses()
+            broadcast = False
+
         i = self.get_interface()
         i.send(gear.Terminate())
-        i.send(gear.Initialise(broadcast=False, address=None))
+        i.send(gear.Initialise(broadcast=broadcast, address=None))
         i.send(gear.Randomise())
         # Randomise may take up to 100ms
         time.sleep(0.1)

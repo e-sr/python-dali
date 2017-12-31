@@ -2,5 +2,7 @@ __all__ = [
     "base",
     "daliserver",
     "hasseb",
-    "tridonic"
+    "tridonic",
+    "Bus_pirate",
+    "buspirate_codemercs"
 ]
